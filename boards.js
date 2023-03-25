@@ -14,6 +14,7 @@ const game = {
 	source: null,
 	won: false,
 	makeWin() {
+		alert("You won!");
 		game.won = true;
 		document.getElementById("win-text").style.visibility = "visible";
 		for (const [_, poly] of game.board) {
@@ -248,7 +249,67 @@ const BOARD_TYPES = {
 			}
 			game.source = game.board.get(keyFrom(y - 1, Math.ceil(x / 2) * 2 - ((y % 2 === 1) ? 1 : 0)));
 		}
-	}
+	},
+	kagome: {
+		generate(x, y) {
+			const keyFrom = (...e) => e.join("_");
+			const sideLen = 40;
+			const midptR = sideLen * Math.sqrt(3) / 2;
+			for (let i = 0; i < y; i++) {
+				for (let j = 0; j < x; j++) {
+					game.board.set(
+						keyFrom(i, j * 2 + i % 2), 
+						new Polygon(6, sideLen, [(j * 2 + i % 2) * sideLen, (i + 1) * midptR * 2], Math.PI / 6)
+					);
+					game.board.set(
+						keyFrom(i, j * 2 + 1 - i % 2, 0),
+						new Polygon(3, sideLen, [(j * 2 + 1 - (i % 2)) * sideLen, (i + 2/3) * midptR * 2], -Math.PI * 5 / 6)
+					);
+					game.board.set(
+						keyFrom(i, j * 2 + 1 - i % 2, 1),
+						new Polygon(3, sideLen, [(j * 2 + 1 - (i % 2)) * sideLen, (i + 4/3) * midptR * 2], Math.PI / 6)
+					);
+				}
+			}
+			game.board.delete(keyFrom(0, x * 2 - 1, 0));
+			game.board.delete(keyFrom(y - 1, (y % 2) * (x * 2 - 1), 1));
+			for (const [key, poly] of game.board) {
+				if (poly.sides !== 3) continue;
+				let [y1, x1, z] = key.split("_");
+				x1 = parseInt(x1, 10);
+				y1 = parseInt(y1, 10);
+				z = parseInt(z, 10);
+				const left = game.board.get(keyFrom(y1, x1 - 1));
+				const right = game.board.get(keyFrom(y1, x1 + 1));
+				switch (z) {
+					case 0: {
+						const top = game.board.get(keyFrom(y1 - 1, x1));
+						poly.connections[2] = top;
+						if (top) top.connections[4] = poly;
+						poly.connections[0] = left;
+						if (left) left.connections[0] = poly;
+						poly.connections[1] = right;
+						if (right) right.connections[2] = poly;
+						break;
+					}
+					case 1: {
+						const bottom = game.board.get(keyFrom(y1 + 1, x1));
+						poly.connections[2] = bottom;
+						if (bottom) bottom.connections[1] = poly;
+						poly.connections[1] = left;
+						if (left) left.connections[5] = poly;
+						poly.connections[0] = right;
+						if (right) right.connections[3] = poly;
+						break;
+					}
+				}
+			}
+			const sourceY = Math.floor(y / 2),
+			sourceX = Math.floor(x / 2) * 2 + sourceY % 2;
+			game.source = game.board.get(keyFrom(sourceY, sourceX));
+		}
+	},
+	octagonal: {}
 }
 
 window.onload = () => requestAnimationFrame(() => game.generateGame("square", 5, 5));

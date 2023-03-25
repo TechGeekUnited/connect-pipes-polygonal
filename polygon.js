@@ -58,7 +58,7 @@ class Polygon {
 		for (let i = 0; i < this.sides; i++) {
 			const v1 = this.vertices[i];
 			const v2 = this.vertices[(i + 1) % this.sides];
-			if (x < Math.min(v1[0], v2[0]) || x > Math.max(v1[0], v2[0])) continue;
+			if (x < Math.min(v1[0], v2[0]) || x >= Math.max(v1[0], v2[0])) continue;
 			if (y - v1[1] <= (v2[1] - v1[1]) / (v2[0] - v1[0]) * (x - v1[0])) t++;
 		}
 		return (t % 2) === 1;
