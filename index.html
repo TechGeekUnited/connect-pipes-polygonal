@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Connect the Pipes</title>
+		<link rel="stylesheet" type="text/css" href="styles.css">
+		<script type="text/javascript" src="queue.js" defer></script>
+		<script type="text/javascript" src="polygon.js" defer></script>
+		<script type="text/javascript" src="boards.js" defer></script>
+		<script type="text/javascript" src="canvas.js" defer></script>
+	</head>
+	<body>
+		<h1>Connect the Pipes</h1>
+		<span class="c-game-rules">
+			Left click to rotate pipes clockwise, shift then left-click to rotate anticlockwise.
+			<br>
+			Right click to mark a pipe as confirmed.
+			<br><br>
+			<b>Rules:<br></b>
+			1. All pipes must be connected to the source of water at the centre.
+			<br>
+			2. There should not be any leakages within the pipes.
+			<br>
+			3. Pipes should not form any cycles. If a cycle is formed, some of the involved nodes
+			will be highlighted in red.
+		</span>
+		<h2 id="win-text" style="visibility: hidden;">You won!</h2>
+		<canvas id="c"></canvas>
+	</body>
+</html>
