@@ -104,12 +104,20 @@ function renderBoard() {
 	requestAnimationFrame(renderBoard);
 }
 
+let eventsStack = [], eventsStackPtr = 0;
 canvas.addEventListener("click", (ev) => {
 	const x = ev.offsetX - boardTransform[0], y = ev.offsetY - boardTransform[1];
 	for (const [_, poly] of game.board) {
 		if (poly.isClicked(x, y)) {
-			if (ev.shiftKey) poly.pipesRotateAnticlockwise();
-			else poly.pipesRotateClockwise();
+			if (ev.shiftKey) {
+				poly.pipesRotateAnticlockwise();
+				eventsStack[eventsStackPtr] = ["cc", _];
+			} else {
+				poly.pipesRotateClockwise();
+				eventsStack[eventsStackPtr] = ["c", _];
+			}
+			eventsStackPtr++;
+			if (eventsStack.length > eventsStackPtr) eventsStack.length = eventsStackPtr;
 			break;
 		}
 	}
@@ -121,9 +129,57 @@ canvas.addEventListener("contextmenu", (ev) => {
 	for (const [_, poly] of game.board) {
 		if (poly.isClicked(x, y)) {
 			poly.locked = !poly.locked;
+			eventsStack.push(["l", _]);
+			eventsStackPtr++;
+			if (eventsStack.length > eventsStackPtr) eventsStack.length = eventsStackPtr;
 			poly.lastCanvasUpdate = currentCanvasUpdate;
 			break;
 		}
 	}
 	ev.preventDefault();
+});
+
+document.addEventListener("keydown", (ev) => {
+	if (game.won || !ev.ctrlKey) return;
+	if (ev.key === "z") {
+		if (!eventsStackPtr) return;
+		eventsStackPtr--;
+		const [e, k] = eventsStack[eventsStackPtr];
+		const poly = game.board.get(k);
+		switch (e) {
+			case "l": {
+				poly.locked = !poly.locked;
+				break;
+			}
+			case "cc": {
+				poly.pipesRotateClockwise();
+				break;
+			}
+			case "c": {
+				poly.pipesRotateAnticlockwise();
+				break;
+			}
+		}
+		poly.lastCanvasUpdate = currentCanvasUpdate;
+	} else if (ev.key === "y") {
+		if (!eventsStack[eventsStackPtr]) return;
+		const [e, k] = eventsStack[eventsStackPtr];
+		eventsStackPtr++;
+		const poly = game.board.get(k);
+		switch (e) {
+			case "l": {
+				poly.locked = !poly.locked;
+				break;
+			}
+			case "cc": {
+				poly.pipesRotateAnticlockwise();
+				break;
+			}
+			case "c": {
+				poly.pipesRotateClockwise();
+				break;
+			}
+		}
+		poly.lastCanvasUpdate = currentCanvasUpdate;
+	}
 });

@@ -108,6 +108,8 @@ const game = {
 		DFS(game.source);
 	},
 	generateGame(type, x, y) {
+		eventsStack = [];
+		eventsStackPtr = 0;
 		game.board = new Map();
 		BOARD_TYPES[type].generate(x, y);
 		game.generateFromBoard();
@@ -117,15 +119,33 @@ const game = {
 		}
 		game.calcLight();
 		initBoard();
+	},
+	makeGameFromUI() {
+		const type = document.getElementById("board-type").value;
+		const x = Number(document.getElementById("width").value);
+		const y = Number(document.getElementById("height").value);
+		if (x < 1 || x > 99) {
+			alert("Width must be between 1 and 99!");
+			return;
+		}
+		if (y < 1 || y > 99) {
+			alert("Height must be between 1 and 99!");
+			return;
+		}
+		game.generateGame(type, x, y);
 	}
 };
 
 const BOARD_TYPES = {
 	square: {
 		generate(x, y) {
+			const sideLen = 35;
 			for (let i = 0; i < x; i++) {
 				for (let j = 0; j < y; j++) {
-					game.board.set(i * 1e7 + j, new Polygon(4, 32, [i * 32 + 16, j * 32 + 16]));
+					game.board.set(
+						i * 1e7 + j,
+						new Polygon(4, sideLen, [(i + 0.5) * sideLen, (j + 0.5) * sideLen])
+					);
 				}
 			}
 			game.source = game.board.get(Math.floor(x / 2) * 1e7 + Math.floor(y / 2));
