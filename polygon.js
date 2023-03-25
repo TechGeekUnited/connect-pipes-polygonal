@@ -10,7 +10,7 @@ class Polygon {
 	pipesRotation = 0;
 	pipesRotationDisplay = 0;
 	dsu = { root: null, size: 1 };
-	search = { visited: false };
+	search = { visited: false, degree: 0 };
 	id = idIter;
 	locked = false;
 	lastCanvasUpdate = 0;

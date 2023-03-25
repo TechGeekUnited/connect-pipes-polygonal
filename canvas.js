@@ -40,7 +40,7 @@ function renderPolygon(polygon) {
 	if (polygon.hasLight) {
 		ctx.beginPath();
 		ctx.lineWidth = 2;
-		ctx.strokeStyle = polygon.hasCycle ? "#f00" : "#0f0";
+		ctx.strokeStyle = polygon.hasCycle ? "#f00" : "#7cf";
 		for (let i = 0; i < polygon.sides; i++) {
 			if ((polygon.pipes & (1 << i)) === 0) continue;
 			ctx.moveTo(x, y);
@@ -58,13 +58,13 @@ function renderPolygon(polygon) {
 		ctx.beginPath();
 		ctx.arc(polygon.position[0], polygon.position[1], 10, 0, 2 * Math.PI);
 		ctx.fill();
-		ctx.strokeStyle = "#0f0";
+		ctx.strokeStyle = game.source.hasCycle ? "#f00" : "#7cf";
 		ctx.lineWidth = 3;
 		ctx.beginPath();
 		ctx.arc(polygon.position[0], polygon.position[1], 6, 0, 2 * Math.PI);
 		ctx.stroke();
 	} else if (polygon.hasLight) {
-		ctx.fillStyle = polygon.hasCycle ? "#f00" : "#0f0";
+		ctx.fillStyle = polygon.hasCycle ? "#f00" : "#7cf";
 		ctx.beginPath();
 		ctx.arc(polygon.position[0], polygon.position[1], circleSize - 1, 0, 2 * Math.PI);
 		ctx.fill();

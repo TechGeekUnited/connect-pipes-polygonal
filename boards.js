@@ -25,19 +25,23 @@ const game = {
 		const hasLight = new Map();
 		const hasCycle = new Map();
 		for (const [key, poly] of game.board) {
-			poly.search.visited = 0;
+			poly.search.visited = false;
+			poly.search.degree = 0;
 			hasLight.set(key, poly.hasLight);
 			hasCycle.set(key, poly.hasCycle);
 			poly.hasLight = false;
 			poly.hasCycle = false;
 		}
+		const nodes = [];
 		function DFS(u, parent) {
 			u.search.visited = true;
+			nodes.push(u);
 			for (let i = 0; i < u.sides; i++) {
 				const v = u.connections[i];
-				if (v === parent) continue;
 				if (!v || !u.hasConnection(i)) continue;
 				if (!v.hasConnection(v.connections.indexOf(u))) continue;
+				v.search.degree++;
+				if (v === parent) continue;
 				if (v.search.visited) {
 					v.hasCycle = true;
 					u.hasCycle = true;
@@ -47,12 +51,32 @@ const game = {
 				}
 			}
 		}
-		game.source.hasLight = 1;
+		game.source.hasLight = true;
 		DFS(game.source, game.source);
+		for (const poly of nodes) {
+			poly.search.visited = false;
+		}
+		function DFS2(u) {
+			u.search.visited = true;
+			for (let i = 0; i < u.sides; i++) {
+				const v = u.connections[i];
+				if (!v || !u.hasConnection(i) || !v.hasLight) continue;
+				if (!v.hasConnection(v.connections.indexOf(u)) || v.search.visited) continue;
+				v.search.degree--;
+				if (v.search.degree === 1) DFS2(v);
+			}
+		}
+		for (const poly of nodes) {
+			if (poly.search.degree <= 1 && !poly.search.visited) DFS2(poly);
+		}
+		for (const poly of nodes) {
+			if (poly.search.degree > 1) poly.hasCycle = true;
+		}
 		let allLit = true;
 		for (const [key, poly] of game.board) {
 			if (!poly.hasLight || poly.hasCycle) allLit = false;
 			if (hasLight.get(key) !== poly.hasLight) poly.lastCanvasUpdate = currentCanvasUpdate;
+			if (hasCycle.get(key) !== poly.hasCycle) poly.lastCanvasUpdate = currentCanvasUpdate;
 		}
 		if (allLit) game.makeWin();
 	},
