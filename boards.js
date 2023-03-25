@@ -125,17 +125,17 @@ const BOARD_TYPES = {
 		generate(x, y) {
 			for (let i = 0; i < x; i++) {
 				for (let j = 0; j < y; j++) {
-					game.board.set(i * y + j, new Polygon(4, 32, [i * 32 + 16, j * 32 + 16]));
+					game.board.set(i * 1e7 + j, new Polygon(4, 32, [i * 32 + 16, j * 32 + 16]));
 				}
 			}
-			game.source = game.board.get(Math.floor(x / 2) * y + Math.floor(y / 2));
+			game.source = game.board.get(Math.floor(x / 2) * 1e7 + Math.floor(y / 2));
 			for (let i = 0; i < x; i++) {
 				for (let j = 0; j < y; j++) {
-					const poly = game.board.get(i * y + j);
-					poly.connections[0] = game.board.get((i + 1) * y + j);
-					poly.connections[1] = game.board.get(i * y + (j - 1));
-					poly.connections[2] = game.board.get((i - 1) * y + j);
-					poly.connections[3] = game.board.get(i * y + (j + 1));
+					const poly = game.board.get(i * 1e7 + j);
+					poly.connections[0] = game.board.get((i + 1) * 1e7 + j);
+					poly.connections[1] = game.board.get(i * 1e7 + (j - 1));
+					poly.connections[2] = game.board.get((i - 1) * 1e7 + j);
+					poly.connections[3] = game.board.get(i * 1e7 + (j + 1));
 				}
 			}
 		}
