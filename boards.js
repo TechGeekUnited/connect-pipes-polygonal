@@ -76,6 +76,7 @@ const game = {
 		}
 		let allLit = true;
 		for (const [key, poly] of game.board) {
+			if (poly instanceof Hologram) continue;
 			if (!poly.hasLight || poly.hasCycle) allLit = false;
 			if (hasLight.get(key) !== poly.hasLight) poly.lastCanvasUpdate = currentCanvasUpdate;
 			if (hasCycle.get(key) !== poly.hasCycle) poly.lastCanvasUpdate = currentCanvasUpdate;
@@ -152,12 +153,12 @@ const game = {
 		const type = document.getElementById("board-type").value;
 		const x = Number(document.getElementById("width").value);
 		const y = Number(document.getElementById("height").value);
-		if (x < 1 || x > 99) {
-			alert("Width must be between 1 and 99!");
+		if (x < 2 || x > 99) {
+			alert("Width must be between 2 and 99!");
 			return;
 		}
-		if (y < 1 || y > 99) {
-			alert("Height must be between 1 and 99!");
+		if (y < 2 || y > 99) {
+			alert("Height must be between 2 and 99!");
 			return;
 		}
 		game.generateGame(type, x, y);
@@ -276,7 +277,7 @@ const BOARD_TYPES = {
 		}
 	},
 	kagome: {
-		generate(x, y, removeExtraenous = true) {
+		generate(x, y, wrap = false) {
 			const keyFrom = (...e) => e.join("_");
 			const sideLen = 40;
 			const midptR = sideLen * Math.sqrt(3) / 2;
@@ -296,21 +297,22 @@ const BOARD_TYPES = {
 					);
 				}
 			}
-			if (removeExtraenous) {
+			if (!wrap) {
 				game.board.delete(keyFrom(0, x * 2 - 1, 0));
 				game.board.delete(keyFrom(y - 1, (y % 2) * (x * 2 - 1), 1));
 			}
+			const modX = wrap ? x * 2 : 1e7, modY = wrap ? y : 1e7;
 			for (const [key, poly] of game.board) {
 				if (poly.sides !== 3) continue;
 				let [y1, x1, z] = key.split("_");
 				x1 = parseInt(x1, 10);
 				y1 = parseInt(y1, 10);
 				z = parseInt(z, 10);
-				const left = game.board.get(keyFrom(y1, x1 - 1));
-				const right = game.board.get(keyFrom(y1, x1 + 1));
+				const left = game.board.get(keyFrom(y1, (x1 + modX - 1) % modX));
+				const right = game.board.get(keyFrom(y1, (x1 + 1) % modX));
 				switch (z) {
 					case 0: {
-						const top = game.board.get(keyFrom(y1 - 1, x1));
+						const top = game.board.get(keyFrom((y1 + modY - 1) % modY, x1));
 						poly.connections[2] = top;
 						if (top) top.connections[4] = poly;
 						poly.connections[0] = left;
@@ -320,7 +322,7 @@ const BOARD_TYPES = {
 						break;
 					}
 					case 1: {
-						const bottom = game.board.get(keyFrom(y1 + 1, x1));
+						const bottom = game.board.get(keyFrom((y1 + 1) % modY, x1));
 						poly.connections[2] = bottom;
 						if (bottom) bottom.connections[1] = poly;
 						poly.connections[1] = left;
@@ -334,6 +336,75 @@ const BOARD_TYPES = {
 			const sourceY = Math.floor(y / 2),
 			sourceX = Math.floor(x / 2) * 2 + sourceY % 2;
 			game.source = game.board.get(keyFrom(sourceY, sourceX));
+		}
+	},
+	kagomeWrap: {
+		generate(x, y) {
+			const keyFrom = (...e) => e.join("_");
+			const sideLen = 40;
+			const midptR = sideLen * Math.sqrt(3) / 2;
+			// y has to be a multiple of 2
+			y = Math.ceil(y / 2) * 2;
+			BOARD_TYPES.kagome.generate(x, y, true);
+			for (let i = 0; i < y; i += 2) {
+				const t0 = game.board.get(keyFrom(i, x * 2 - 1, 0)),
+					t1 = game.board.get(keyFrom(i, x * 2 - 1, 1));
+				const hex = game.board.get(keyFrom(i, 0));
+				game.board.set(keyFrom(i, x * 2), new Hologram(hex, [(x * 2) * sideLen, (i + 1) * midptR * 2]));
+				game.board.set(keyFrom(i, -1, 0), new Hologram(t0, [-sideLen, (i + 2/3) * midptR * 2]));
+				game.board.set(keyFrom(i, -1, 1), new Hologram(t1, [-sideLen, (i + 4/3) * midptR * 2]));
+			}
+			for (let i = 1; i < y; i += 2) {
+				const t0 = game.board.get(keyFrom(i, 0, 0)),
+					t1 = game.board.get(keyFrom(i, 0, 1));
+				const hex = game.board.get(keyFrom(i, x * 2 - 1));
+				game.board.set(keyFrom(i, -1), new Hologram(hex, [-sideLen, (i + 1) * midptR * 2]));
+				game.board.set(keyFrom(i, x * 2, 0), new Hologram(t0, [(x * 2) * sideLen, (i + 2/3) * midptR * 2]));
+				game.board.set(keyFrom(i, x * 2, 1), new Hologram(t1, [(x * 2) * sideLen, (i + 4/3) * midptR * 2]));
+			}
+			for (let j = 0; j < x; j++) {
+				game.board.set(
+					keyFrom(y, j * 2), 
+					new Hologram(game.board.get(keyFrom(0, j * 2)), [j * 2 * sideLen, (y + 1) * midptR * 2])
+				);
+				game.board.set(
+					keyFrom(y, j * 2 + 1, 0),
+					new Hologram(game.board.get(keyFrom(0, j * 2 + 1, 0)), [(j * 2 + 1) * sideLen, (y + 2/3) * midptR * 2])
+				);
+				game.board.set(
+					keyFrom(y, j * 2 + 1, 1),
+					new Hologram(game.board.get(keyFrom(0, j * 2 + 1, 1)), [(j * 2 + 1) * sideLen, (y + 4/3) * midptR * 2])
+				);
+
+				game.board.set(
+					keyFrom(-1, j * 2 + 1), 
+					new Hologram(game.board.get(keyFrom(y - 1, j * 2 + 1)), [(j * 2 + 1) * sideLen, 0])
+				);
+				game.board.set(
+					keyFrom(-1, j * 2, 0),
+					new Hologram(game.board.get(keyFrom(y - 1, j * 2, 0)), [j * 2 * sideLen, -2/3 * midptR])
+				);
+				game.board.set(
+					keyFrom(-1, j * 2, 1),
+					new Hologram(game.board.get(keyFrom(y - 1, j * 2, 1)), [j * 2 * sideLen, 2/3 * midptR])
+				);
+			}
+			game.board.set(
+				keyFrom(y, x * 2),
+				new Hologram(game.board.get("0_0"), [(x * 2) * sideLen, (y + 1) * midptR * 2])
+			);
+			game.board.set(
+				keyFrom(-1, -2),
+				new Hologram(game.board.get(keyFrom(y - 1, x * 2 - 1)), [-sideLen, 0])
+			);
+			game.board.set(
+				keyFrom(y, -1, 0),
+				new Hologram(game.board.get(keyFrom(0, x * 2 - 1, 0)), [-sideLen, (y + 2/3) * midptR * 2])
+			);
+			game.board.set(
+				keyFrom(-1, x * 2, 1),
+				new Hologram(game.board.get(keyFrom(y - 1, 0, 1)), [x * 2 * sideLen, 2/3 * midptR])
+			);
 		}
 	},
 	octagonal: {

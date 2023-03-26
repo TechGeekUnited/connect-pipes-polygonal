@@ -1,7 +1,7 @@
 const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
 
 function renderPolygon(polygon) {
-	ctx.fillStyle = polygon.locked ? "#888" : "#bbb";
+	ctx.fillStyle = polygon.locked ? "#777" : "#bbb";
 	ctx.beginPath();
 	ctx.moveTo(polygon.vertices[0][0], polygon.vertices[0][1]);
 	for (let i = 1; i <= polygon.sides; i++) {
@@ -69,7 +69,7 @@ function renderPolygon(polygon) {
 function renderHologram(holo) {
 	ctx.translate(holo.position[0] - holo.parent.position[0], holo.position[1] - holo.parent.position[1]);
 	renderPolygon(holo.parent);
-	ctx.fillStyle = "#0008";
+	ctx.fillStyle = "#eee8";
 	ctx.beginPath();
 	const polygon = holo.parent;
 	ctx.moveTo(polygon.vertices[0][0], polygon.vertices[0][1]);
