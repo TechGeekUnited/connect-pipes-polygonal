@@ -25,4 +25,5 @@ body {
 #c {
 	background-color: #000;
 	border: 5px solid #888;
+	touch-action: manipulation;
 }
