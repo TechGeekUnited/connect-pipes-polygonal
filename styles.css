@@ -16,8 +16,13 @@ body {
 }
 
 .c-create-game {
-	border: 3px solid #666;
+	border: 5px solid #666;
 	background-color: #ccc;
 	margin: 10px;
 	padding: 5px 10px;
+}
+
+#c {
+	background-color: #000;
+	border: 5px solid #888;
 }

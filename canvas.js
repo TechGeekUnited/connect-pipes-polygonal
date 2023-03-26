@@ -118,9 +118,9 @@ function initBoard() {
 	canvas.width = ((maxX - minX) + 10) * zoomLevel;
 	canvas.height = ((maxY - minY) + 10) * zoomLevel;
 	ctx.resetTransform();
-	ctx.translate(5 - minX, 5 - minY);
 	ctx.scale(zoomLevel, zoomLevel);
-	boardTransform = Matrix.mul3x3(Matrix.scale(1/zoomLevel, 1/zoomLevel), Matrix.translate(minX - 5, minY - 5));
+	ctx.translate(5 - minX, 5 - minY);
+	boardTransform = Matrix.mul3x3(Matrix.translate(minX - 5, minY - 5), Matrix.scale(1/zoomLevel, 1/zoomLevel));
 	if (!init) startRenderBoard();
 	init = true;
 	renderBoard(true);

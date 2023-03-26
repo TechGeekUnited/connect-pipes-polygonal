@@ -39,7 +39,7 @@ class Polygon {
 	computeVertices() {
 		if (this.vertices.length) return;
 		const x = this.position[0], y = this.position[1], ang = 2 * Math.PI / this.sides;
-		const l = this.sideLength / Math.sin(ang / 2) / 2 - 1;
+		const l = this.sideLength / Math.sin(ang / 2) / 2 - 2;
 		for (let i = 0; i < this.sides; i++) {
 			this.vertices.push([
 				l * Math.cos((i - 0.5) * ang + this.rotation) + x,
@@ -99,5 +99,14 @@ class Polygon {
 		if (this.dsu_find() === other.dsu_find()) return;
 		this.dsu_find().dsu.size += other.dsu_find().dsu.size;
 		other.dsu_find().dsu.root = this.dsu_find();
+	}
+}
+
+class Hologram {
+	parent;
+	position = [0, 0];
+	constructor(parent, position = [0, 0]) {
+		this.parent = parent;
+		this.position = position;
 	}
 }
