@@ -14,3 +14,10 @@ body {
 	text-align: left;
 	margin: auto;
 }
+
+.c-create-game {
+	border: 3px solid #666;
+	background-color: #ccc;
+	margin: 10px;
+	padding: 5px 10px;
+}

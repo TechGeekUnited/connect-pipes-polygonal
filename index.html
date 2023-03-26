@@ -28,7 +28,6 @@
 			4. There may exist multiple solutions to the game.
 		</span>
 		<div class="c-create-game">
-			<br>
 			<b>Make new game</b>
 			<br>
 			<br>
@@ -38,6 +37,7 @@
 				<option value="hexagon">Hexagons</option>
 				<option value="triangle">Triangles</option>
 				<option value="kagome">Kagome</option>
+				<option value="octagonal">Octagonal</option>
 			</select>
 			<br>
 			<br>
@@ -49,7 +49,7 @@
 			<br>
 			<button onclick="game.makeGameFromUI();">Create!</button>
 		</div>
-		<h2 id="win-text" style="visibility: hidden;">You won!</h2>
+		<h2 id="win-text" style="display: none;">You won!</h2>
 		<canvas id="c"></canvas>
 	</body>
 </html>

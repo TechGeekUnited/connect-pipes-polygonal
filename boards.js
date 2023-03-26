@@ -14,13 +14,13 @@ const game = {
 	source: null,
 	won: false,
 	makeWin() {
-		alert("You won!");
 		game.won = true;
-		document.getElementById("win-text").style.visibility = "visible";
+		document.getElementById("win-text").style.display = "block";
 		for (const [_, poly] of game.board) {
 			poly.locked = true;
 			poly.lastCanvasUpdate = currentCanvasUpdate;
 		}
+		requestAnimationFrame(() => requestAnimationFrame(() => alert("You won!")));
 	},
 	calcLight() {
 		const hasLight = new Map();
@@ -83,7 +83,7 @@ const game = {
 	},
 	generateFromBoard() {
 		game.won = false;
-		document.getElementById("win-text").style.visibility = "hidden";
+		document.getElementById("win-text").style.display = "none";
 		const NODE_PROBABILITY = 0.07;
 		const EDGE_PROBABILITY = 0.11;
 		const queue = new Queue();
@@ -163,6 +163,29 @@ const game = {
 
 const BOARD_TYPES = {
 	square: {
+		generate(x, y) {
+			const sideLen = 35;
+			for (let i = 0; i < x; i++) {
+				for (let j = 0; j < y; j++) {
+					game.board.set(
+						i * 1e7 + j,
+						new Polygon(4, sideLen, [(i + 0.5) * sideLen, (j + 0.5) * sideLen])
+					);
+				}
+			}
+			game.source = game.board.get(Math.floor(x / 2) * 1e7 + Math.floor(y / 2));
+			for (let i = 0; i < x; i++) {
+				for (let j = 0; j < y; j++) {
+					const poly = game.board.get(i * 1e7 + j);
+					poly.connections[0] = game.board.get((i + 1) * 1e7 + j);
+					poly.connections[1] = game.board.get(i * 1e7 + (j - 1));
+					poly.connections[2] = game.board.get((i - 1) * 1e7 + j);
+					poly.connections[3] = game.board.get(i * 1e7 + (j + 1));
+				}
+			}
+		}
+	},
+	squareWrap: {
 		generate(x, y) {
 			const sideLen = 35;
 			for (let i = 0; i < x; i++) {
@@ -309,7 +332,51 @@ const BOARD_TYPES = {
 			game.source = game.board.get(keyFrom(sourceY, sourceX));
 		}
 	},
-	octagonal: {}
+	octagonal: {
+		generate(x, y) {
+			const keyFrom = (...e) => e.join("_");
+			const sideLen = 35;
+			const diag = 35 / Math.sqrt(2);
+			for (let i = 0; i < x; i++) {
+				for (let j = 0; j < y; j++) {
+					game.board.set(
+						keyFrom(2 * i, 2 * j), 
+						new Polygon(8, sideLen, [(i + 0.5) * (sideLen + diag * 2), (j + 0.5) * (sideLen + diag * 2)])
+					);
+				}
+			}
+			for (let i = 0; i < x - 1; i++) {
+				for (let j = 0; j < y - 1; j++) {
+					game.board.set(
+						keyFrom(2 * i + 1, 2 * j + 1), 
+						new Polygon(4, sideLen, [(i + 1) * (sideLen + diag * 2), (j + 1) * (sideLen + diag * 2)], Math.PI / 4)
+					);
+				}
+			}
+			function makeCon([p1, id1], [p2, id2]) {
+				p1.connections[id1] = p2;
+				if (p2) p2.connections[id2] = p1;
+			}
+			for (const [key, poly] of game.board) {
+				if (poly.sides !== 8) continue;
+				let [x1, y1] = key.split("_");
+				x1 = parseInt(x1, 10);
+				y1 = parseInt(y1, 10);
+				const right = game.board.get(keyFrom(x1 + 2, y1));
+				const bottom = game.board.get(keyFrom(x1, y1 + 2));
+				const tl = game.board.get(keyFrom(x1 - 1, y1 - 1));
+				const tr = game.board.get(keyFrom(x1 + 1, y1 - 1));
+				const br = game.board.get(keyFrom(x1 + 1, y1 + 1));
+				const bl = game.board.get(keyFrom(x1 - 1, y1 + 1));
+				makeCon([poly, 0], [right, 4]);
+				makeCon([poly, 6], [bottom, 2]);
+				makeCon([poly, 3], [tl, 3]);
+				makeCon([poly, 1], [tr, 2]);
+				makeCon([poly, 7], [br, 1]);
+				makeCon([poly, 5], [bl, 0]);
+			}
+			game.source = game.board.get("0_0");
+		}}
 }
 
 window.onload = () => requestAnimationFrame(() => game.generateGame("square", 5, 5));
