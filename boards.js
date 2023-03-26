@@ -35,37 +35,45 @@ const game = {
 			poly.hasCycle = false;
 		}
 		const nodes = [];
-		function DFS(u, parent) {
-			u.search.visited = true;
-			nodes.push(u);
-			for (let i = 0; i < u.sides; i++) {
-				const v = u.connections[i];
-				if (!v || !u.hasConnection(i)) continue;
-				if (!v.hasConnection(v.connections.indexOf(u))) continue;
-				v.search.degree++;
-				if (v === parent) continue;
-				if (v.search.visited) {
-					v.hasCycle = true;
-					u.hasCycle = true;
-				} else {
-					v.hasLight = true;
-					DFS(v, u);
+		function DFS(i) {
+			const stack = [i];
+			while (stack.length) {
+				const u = stack.pop();
+				if (!u.search.visited) {
+					nodes.push(u);
+					u.search.visited = true;
+					for (let i = 0; i < u.sides; i++) {
+						const v = u.connections[i];
+						if (!v || !u.hasConnection(i)) continue;
+						if (!v.hasConnection(v.connections.indexOf(u))) continue;
+						v.search.degree++;
+						if (!v.search.visited) {
+							v.hasLight = true;
+							stack.push(v);
+						}
+					}
 				}
 			}
 		}
 		game.source.hasLight = true;
-		DFS(game.source, game.source);
+		DFS(game.source);
 		for (const poly of nodes) {
 			poly.search.visited = false;
 		}
-		function DFS2(u) {
-			u.search.visited = true;
-			for (let i = 0; i < u.sides; i++) {
-				const v = u.connections[i];
-				if (!v || !u.hasConnection(i) || !v.hasLight) continue;
-				if (!v.hasConnection(v.connections.indexOf(u)) || v.search.visited) continue;
-				v.search.degree--;
-				if (v.search.degree === 1) DFS2(v);
+		function DFS2(i) {
+			const stack = [i];
+			while (stack.length) {
+				const u = stack.pop();
+				if (!u.search.visited) {
+					u.search.visited = true;
+					for (let i = 0; i < u.sides; i++) {
+						const v = u.connections[i];
+						if (!v || !u.hasConnection(i) || !v.hasLight) continue;
+						if (!v.hasConnection(v.connections.indexOf(u)) || v.search.visited) continue;
+						v.search.degree--;
+						if (v.search.degree === 1) stack.push(v);
+					}
+				}
 			}
 		}
 		for (const poly of nodes) {
@@ -120,16 +128,22 @@ const game = {
 			}
 		}
 		if (game.source.dsu.size === game.board.size) return;
-		function DFS(u) {
-			u.search.visited = true;
-			const order = shuffle(Array.from(Array(u.sides), (_, i) => i));
-			for (const i of order) {
-				if (u.connections[i] && !u.connections[i].search.visited) {
-					DFS(u.connections[i]);
-					if (u.dsu_find() !== u.connections[i].dsu_find()) {
-						u.addConnection(i);
-						u.connections[i].addConnection(u.connections[i].connections.indexOf(u));
-						u.dsu_union(u.connections[i]);
+		function DFS(i) {
+			const stack = [i];
+			while (stack.length) {
+				const u = stack.pop();
+				if (!u.search.visited) {
+					u.search.visited = true;
+					const order = shuffle(Array.from(Array(u.sides), (_, i) => i));
+					for (const i of order) {
+						if (u.connections[i] && !u.connections[i].search.visited) {
+							stack.push(u.connections[i]);
+							if (u.dsu_find() !== u.connections[i].dsu_find()) {
+								u.addConnection(i);
+								u.connections[i].addConnection(u.connections[i].connections.indexOf(u));
+								u.dsu_union(u.connections[i]);
+							}
+						}
 					}
 				}
 			}
@@ -452,6 +466,81 @@ const BOARD_TYPES = {
 			}
 			if (x % 2 === 0 && y % 2 === 0) game.source = game.board.get(keyFrom(x - 1, y - 1))
 			else game.source = game.board.get(keyFrom(Math.floor(x / 2) * 2, Math.floor(y / 2) * 2));
+		}
+	},
+	dodecagonal: {
+		generate(x, y) {
+			const keyFrom = (...e) => e.join("_");
+			const sideLen = 32;
+			const docMidptR = sideLen / Math.tan(Math.PI / 12) / 2;
+			const hexMidptR = sideLen / Math.tan(Math.PI / 6) / 2;
+			const sqMidptR = sideLen / 2;
+			const unitD = docMidptR * 2 + sideLen;
+			const euDistSq = ([a, b], [c, d]) => (a - c) * (a - c) + (b - d) * (b - d);
+			let calls = 0;
+			const makeCon = (a, b) => {
+				calls++;
+				let aId = 0, aClosest = Infinity;
+				for (let i = 0; i < a.sides; i++) {
+					const e = euDistSq(a.midpts[i], b.position);
+					if (e < aClosest) {
+						aClosest = e;
+						aId = i;
+					}
+				}
+				let bId = 0, bClosest = Infinity;
+				for (let i = 0; i < b.sides; i++) {
+					const e = euDistSq(b.midpts[i], a.position);
+					if (e < bClosest) {
+						bClosest = e;
+						bId = i;
+					}
+				}
+				a.connections[aId] = b;
+				b.connections[bId] = a;
+			}
+			for (let i = 0; i < x; i++) {
+				for (let j = 0; j < y; j++) {
+					game.board.set(
+						keyFrom("ddc", i, j),
+						new Polygon(12, sideLen, [(i + (j % 2) / 2 + 10) * unitD, (j + 10) * unitD * Math.sqrt(3/4)])
+					);
+					const ddc = game.board.get(keyFrom("ddc", i, j));
+					const [x1, y1] = ddc.position;
+					let polys = [];
+					for (let k = 0; k < 6; k++) {
+						const sqAng = k * 2 * Math.PI / 6;
+						const sqX = Math.cos(-sqAng) * (docMidptR + sqMidptR) + x1;
+						const sqY = Math.sin(-sqAng) * (docMidptR + sqMidptR) + y1;
+						if (!game.board.get(keyFrom(sqX.toFixed(5), sqY.toFixed(5)))) {
+							game.board.set(
+								keyFrom(sqX.toFixed(5), sqY.toFixed(5)),
+								new Polygon(4, sideLen, [sqX, sqY], sqAng)
+							);
+						}
+						polys.push(game.board.get(keyFrom(sqX.toFixed(5), sqY.toFixed(5))));
+						const hexAng = (k * 2 + 1) * Math.PI / 6;
+						const hexX = Math.cos(-hexAng) * (docMidptR + hexMidptR) + x1;
+						const hexY = Math.sin(-hexAng) * (docMidptR + hexMidptR) + y1;
+						if (!game.board.get(keyFrom(hexX.toFixed(5), hexY.toFixed(5)))) {
+							game.board.set(
+								keyFrom(hexX.toFixed(5), hexY.toFixed(5)),
+								new Polygon(6, sideLen, [hexX, hexY], hexAng)
+							);
+						}
+						polys.push(game.board.get(keyFrom(hexX.toFixed(5), hexY.toFixed(5))));
+					}
+					for (const poly of polys) {
+						makeCon(ddc, poly);
+					}
+					for (let i = 1; i < 12; i += 2) {
+						makeCon(polys[i], polys[i - 1]);
+						makeCon(polys[i], polys[(i + 1) % 12]);
+					}
+				}
+			}
+			game.source = game.board.get(keyFrom("ddc", Math.floor(x / 2), Math.floor(y / 2)));
+			console.log(calls);
 		}
 	}
 }
