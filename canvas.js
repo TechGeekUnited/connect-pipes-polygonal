@@ -2,15 +2,12 @@ const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
 
 function renderPolygon(polygon) {
 	ctx.fillStyle = polygon.locked ? "#888" : "#bbb";
-	ctx.strokeStyle = "#000";
-	ctx.lineWidth = 1;
 	ctx.beginPath();
 	ctx.moveTo(polygon.vertices[0][0], polygon.vertices[0][1]);
 	for (let i = 1; i <= polygon.sides; i++) {
 		ctx.lineTo(polygon.vertices[i % polygon.sides][0], polygon.vertices[i % polygon.sides][1]);
 	}
 	ctx.fill();
-	ctx.stroke();
 	let connections = 0;
 	for (let i = 0; i < polygon.sides; i++) {
 		if ((polygon.pipes & (1 << i)) === 0) continue;
