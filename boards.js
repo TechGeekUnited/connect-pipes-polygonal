@@ -26,6 +26,7 @@ const game = {
 		const hasLight = new Map();
 		const hasCycle = new Map();
 		for (const [key, poly] of game.board) {
+			if (poly instanceof Hologram) continue;
 			poly.search.visited = false;
 			poly.search.degree = 0;
 			hasLight.set(key, poly.hasLight);
@@ -88,9 +89,11 @@ const game = {
 		const EDGE_PROBABILITY = 0.11;
 		const queue = new Queue();
 		for (const [_key, poly] of game.board) {
+			if (poly instanceof Hologram) continue;
 			if (Math.random() < NODE_PROBABILITY || poly === game.source) queue.push(poly);
 		}
 		for (const [_key, poly] of game.board) {
+			if (poly instanceof Hologram) continue;
 			if (poly.dsu.root !== poly || poly.dsu.size > 1) continue;
 			queue.push(poly);
 			while (queue.length()) {
@@ -188,23 +191,22 @@ const BOARD_TYPES = {
 	squareWrap: {
 		generate(x, y) {
 			const sideLen = 35;
+			BOARD_TYPES.square.generate(x, y);
 			for (let i = 0; i < x; i++) {
-				for (let j = 0; j < y; j++) {
-					game.board.set(
-						i * 1e7 + j,
-						new Polygon(4, sideLen, [(i + 0.5) * sideLen, (j + 0.5) * sideLen])
-					);
-				}
+				const poly1 = game.board.get(i * 1e7 + (y - 1));
+				const poly2 = game.board.get(i * 1e7);
+				poly1.connections[3] = poly2;
+				poly2.connections[1] = poly1;
+				game.board.set("hx1" + i.toString(), new Hologram(poly1, [(i + 0.5) * sideLen, -0.5 * sideLen]));
+				game.board.set("hx2" + i.toString(), new Hologram(poly2, [(i + 0.5) * sideLen, (y + 0.5) * sideLen]));
 			}
-			game.source = game.board.get(Math.floor(x / 2) * 1e7 + Math.floor(y / 2));
-			for (let i = 0; i < x; i++) {
-				for (let j = 0; j < y; j++) {
-					const poly = game.board.get(i * 1e7 + j);
-					poly.connections[0] = game.board.get((i + 1) * 1e7 + j);
-					poly.connections[1] = game.board.get(i * 1e7 + (j - 1));
-					poly.connections[2] = game.board.get((i - 1) * 1e7 + j);
-					poly.connections[3] = game.board.get(i * 1e7 + (j + 1));
-				}
+			for (let i = 0; i < y; i++) {
+				const poly1 = game.board.get((x - 1) * 1e7 + i);
+				const poly2 = game.board.get(i);
+				poly1.connections[0] = poly2;
+				poly2.connections[2] = poly1;
+				game.board.set("hy1" + i.toString(), new Hologram(poly1, [-0.5 * sideLen, (i + 0.5) * sideLen]));
+				game.board.set("hy2" + i.toString(), new Hologram(poly2, [(x + 0.5) * sideLen, (i + 0.5) * sideLen]));
 			}
 		}
 	},
@@ -274,7 +276,7 @@ const BOARD_TYPES = {
 		}
 	},
 	kagome: {
-		generate(x, y) {
+		generate(x, y, removeExtraenous = true) {
 			const keyFrom = (...e) => e.join("_");
 			const sideLen = 40;
 			const midptR = sideLen * Math.sqrt(3) / 2;
@@ -294,8 +296,10 @@ const BOARD_TYPES = {
 					);
 				}
 			}
-			game.board.delete(keyFrom(0, x * 2 - 1, 0));
-			game.board.delete(keyFrom(y - 1, (y % 2) * (x * 2 - 1), 1));
+			if (removeExtraenous) {
+				game.board.delete(keyFrom(0, x * 2 - 1, 0));
+				game.board.delete(keyFrom(y - 1, (y % 2) * (x * 2 - 1), 1));
+			}
 			for (const [key, poly] of game.board) {
 				if (poly.sides !== 3) continue;
 				let [y1, x1, z] = key.split("_");
@@ -376,7 +380,8 @@ const BOARD_TYPES = {
 				makeCon([poly, 5], [bl, 0]);
 			}
 			game.source = game.board.get("0_0");
-		}}
+		}
+	}
 }
 
 window.onload = () => requestAnimationFrame(() => game.generateGame("square", 5, 5));

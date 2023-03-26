@@ -25,6 +25,7 @@ class Polygon {
 		this.dsu.root = this;
 		idIter++;
 		this.lastCanvasUpdate = currentCanvasUpdate;
+		this.computeVertices();
 	}
 
 	addConnection(idx) {
@@ -108,5 +109,25 @@ class Hologram {
 	constructor(parent, position = [0, 0]) {
 		this.parent = parent;
 		this.position = position;
+		this.computeOwnVertices();
+	}
+	
+	vertices = [];
+	computeOwnVertices() {
+		if (this.vertices.length) return;
+		this.vertices = this.parent.vertices.map(([x, y]) => [
+			x + this.position[0] - this.parent.position[0],
+			y + this.position[1] - this.parent.position[1],
+		]);
+	}
+	isClicked(x, y) {
+		let t = 0;
+		for (let i = 0; i < this.parent.sides; i++) {
+			const v1 = this.vertices[i];
+			const v2 = this.vertices[(i + 1) % this.parent.sides];
+			if (x < Math.min(v1[0], v2[0]) || x >= Math.max(v1[0], v2[0])) continue;
+			if (y - v1[1] <= (v2[1] - v1[1]) / (v2[0] - v1[0]) * (x - v1[0])) t++;
+		}
+		return (t % 2) === 1;
 	}
 }

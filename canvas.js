@@ -66,6 +66,19 @@ function renderPolygon(polygon) {
 		ctx.fill();
 	}
 }
+function renderHologram(holo) {
+	ctx.translate(holo.position[0] - holo.parent.position[0], holo.position[1] - holo.parent.position[1]);
+	renderPolygon(holo.parent);
+	ctx.fillStyle = "#0008";
+	ctx.beginPath();
+	const polygon = holo.parent;
+	ctx.moveTo(polygon.vertices[0][0], polygon.vertices[0][1]);
+	for (let i = 1; i <= polygon.sides; i++) {
+		ctx.lineTo(polygon.vertices[i % polygon.sides][0], polygon.vertices[i % polygon.sides][1]);
+	}
+	ctx.fill();
+	ctx.translate(-holo.position[0] + holo.parent.position[0], -holo.position[1] + holo.parent.position[1]);
+}
 
 let currentCanvasUpdate = 0;
 let init = false;
@@ -107,7 +120,6 @@ let zoomLevel = 1;
 function initBoard() {
 	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 	for (const [_key, poly] of game.board) {
-		poly.computeVertices();
 		for (let vertex of poly.vertices) {
 			maxX = Math.max(maxX, vertex[0]);
 			maxY = Math.max(maxY, vertex[1]);
@@ -129,10 +141,19 @@ function renderBoard(force = false) {
 	if (canvas.width > window.innerWidth) canvas.style.alignSelf = "flex-start";
 	else canvas.style.alignSelf = "center";
 	currentCanvasUpdate++;
+	const holograms = [];
 	for (const [_key, poly] of game.board) {
+		if (poly instanceof Hologram) {
+			holograms.push(poly);
+			continue;
+		}
 		poly.updatePipesRotationDisplay();
 		if (!force && currentCanvasUpdate - poly.lastCanvasUpdate > 2) continue;
 		renderPolygon(poly);
+	}
+	for (const holo of holograms) {
+		if (!force && currentCanvasUpdate - holo.parent.lastCanvasUpdate > 2) continue;
+		renderHologram(holo);
 	}
 }
 function startRenderBoard() {
@@ -144,8 +165,9 @@ let eventsStack = [], eventsStackPtr = 0;
 canvas.addEventListener("click", (ev) => {
 	let x = ev.offsetX, y = ev.offsetY;
 	[x, y] = Matrix.transformVector(boardTransform, [x, y]);
-	for (const [_, poly] of game.board) {
-		if (poly.isClicked(x, y)) {
+	for (const [_, _poly] of game.board) {
+		if (_poly.isClicked(x, y)) {
+			const poly = _poly instanceof Hologram ? _poly.parent : _poly;
 			if (ev.shiftKey) {
 				poly.pipesRotateAnticlockwise();
 				eventsStack[eventsStackPtr] = ["cc", _];
@@ -164,8 +186,9 @@ canvas.addEventListener("contextmenu", (ev) => {
 	if (game.won) return;
 	let x = ev.offsetX, y = ev.offsetY;
 	[x, y] = Matrix.transformVector(boardTransform, [x, y]);
-	for (const [_, poly] of game.board) {
-		if (poly.isClicked(x, y)) {
+	for (const [_, _poly] of game.board) {
+		if (_poly.isClicked(x, y)) {
+			const poly = _poly instanceof Hologram ? _poly.parent : _poly;
 			poly.locked = !poly.locked;
 			eventsStack.push(["l", _]);
 			eventsStackPtr++;
