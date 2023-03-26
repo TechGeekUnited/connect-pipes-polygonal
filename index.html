@@ -49,6 +49,12 @@
 			<br>
 			<button onclick="game.makeGameFromUI();">Create!</button>
 		</div>
+		<br>
+		<label for="zoom">Zoom level:</label>
+		<input
+			type="range" id="zoom" min="0" max="10" value="0"
+			oninput="zoomLevel = Math.pow(1.1, Number(this.value)); initBoard();"
+		>
 		<h2 id="win-text" style="display: none;">You won!</h2>
 		<canvas id="c"></canvas>
 	</body>

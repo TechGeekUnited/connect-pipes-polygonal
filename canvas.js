@@ -1,7 +1,6 @@
 const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
 
 function renderPolygon(polygon) {
-	if (currentCanvasUpdate - polygon.lastCanvasUpdate > 2) return;
 	ctx.fillStyle = polygon.locked ? "#888" : "#bbb";
 	ctx.strokeStyle = "#000";
 	ctx.lineWidth = 1;
@@ -73,7 +72,41 @@ function renderPolygon(polygon) {
 
 let currentCanvasUpdate = 0;
 let init = false;
-let boardTransform = [5, 5];
+let boardTransform = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+const Matrix = {
+	translate(x, y) {
+		return [[1, 0, 0], [0, 1, 0], [x, y, 1]];
+	},
+	scale(x, y) {
+		return [[x, 0, 0], [0, y, 0], [0, 0, 1]];
+	},
+	mul3x3(a, b) {
+		return [
+			[
+				a[0][0]*b[0][0] + a[1][0]*b[0][1] + a[2][0]*b[0][2],
+				a[0][1]*b[0][0] + a[1][1]*b[0][1] + a[2][1]*b[0][2],
+				a[0][2]*b[0][0] + a[1][2]*b[0][1] + a[2][2]*b[0][2],
+			],
+			[
+				a[0][0]*b[1][0] + a[1][0]*b[1][1] + a[2][0]*b[1][2],
+				a[0][1]*b[1][0] + a[1][1]*b[1][1] + a[2][1]*b[1][2],
+				a[0][2]*b[1][0] + a[1][2]*b[1][1] + a[2][2]*b[1][2],
+			],
+			[
+				a[0][0]*b[2][0] + a[1][0]*b[2][1] + a[2][0]*b[2][2],
+				a[0][1]*b[2][0] + a[1][1]*b[2][1] + a[2][1]*b[2][2],
+				a[0][2]*b[2][0] + a[1][2]*b[2][1] + a[2][2]*b[2][2],
+			]
+		];
+	},
+	transformVector(m, v) {
+		return [
+			m[0][0] * v[0] + m[1][0] * v[1] + m[2][0],
+			m[0][1] * v[0] + m[1][1] * v[1] + m[2][1],
+		];
+	}
+};
+let zoomLevel = 1;
 function initBoard() {
 	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 	for (const [_key, poly] of game.board) {
@@ -85,28 +118,35 @@ function initBoard() {
 			minY = Math.min(minY, vertex[1]);
 		}
 	}
-	canvas.width = (maxX - minX) + 10;
-	canvas.height = (maxY - minY) + 10;
+	canvas.width = ((maxX - minX) + 10) * zoomLevel;
+	canvas.height = ((maxY - minY) + 10) * zoomLevel;
 	ctx.resetTransform();
 	ctx.translate(5 - minX, 5 - minY);
-	boardTransform = [5 - minX, 5 - minY];
-	if (!init) renderBoard();
+	ctx.scale(zoomLevel, zoomLevel);
+	boardTransform = Matrix.mul3x3(Matrix.scale(1/zoomLevel, 1/zoomLevel), Matrix.translate(minX - 5, minY - 5));
+	if (!init) startRenderBoard();
 	init = true;
+	renderBoard(true);
 }
-function renderBoard() {
+function renderBoard(force = false) {
 	if (canvas.width > window.innerWidth) canvas.style.alignSelf = "flex-start";
 	else canvas.style.alignSelf = "center";
 	currentCanvasUpdate++;
 	for (const [_key, poly] of game.board) {
 		poly.updatePipesRotationDisplay();
+		if (!force && currentCanvasUpdate - poly.lastCanvasUpdate > 2) continue;
 		renderPolygon(poly);
 	}
-	requestAnimationFrame(renderBoard);
+}
+function startRenderBoard() {
+	renderBoard();
+	requestAnimationFrame(startRenderBoard);
 }
 
 let eventsStack = [], eventsStackPtr = 0;
 canvas.addEventListener("click", (ev) => {
-	const x = ev.offsetX - boardTransform[0], y = ev.offsetY - boardTransform[1];
+	let x = ev.offsetX, y = ev.offsetY;
+	[x, y] = Matrix.transformVector(boardTransform, [x, y]);
 	for (const [_, poly] of game.board) {
 		if (poly.isClicked(x, y)) {
 			if (ev.shiftKey) {
@@ -125,7 +165,8 @@ canvas.addEventListener("click", (ev) => {
 
 canvas.addEventListener("contextmenu", (ev) => {
 	if (game.won) return;
-	const x = ev.offsetX - boardTransform[0], y = ev.offsetY - boardTransform[1];
+	let x = ev.offsetX, y = ev.offsetY;
+	[x, y] = Matrix.transformVector(boardTransform, [x, y]);
 	for (const [_, poly] of game.board) {
 		if (poly.isClicked(x, y)) {
 			poly.locked = !poly.locked;
