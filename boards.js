@@ -450,7 +450,8 @@ const BOARD_TYPES = {
 				makeCon([poly, 7], [br, 1]);
 				makeCon([poly, 5], [bl, 0]);
 			}
-			game.source = game.board.get("0_0");
+			if (x % 2 === 0 && y % 2 === 0) game.source = game.board.get(keyFrom(x - 1, y - 1))
+			else game.source = game.board.get(keyFrom(Math.floor(x / 2) * 2, Math.floor(y / 2) * 2));
 		}
 	}
 }
