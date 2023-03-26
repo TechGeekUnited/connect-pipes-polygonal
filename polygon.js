@@ -40,7 +40,7 @@ class Polygon {
 	computeVertices() {
 		if (this.vertices.length) return;
 		const x = this.position[0], y = this.position[1], ang = 2 * Math.PI / this.sides;
-		const l = this.sideLength / Math.sin(ang / 2) / 2 - 2;
+		const l = this.sideLength / Math.sin(ang / 2) / 2 - 2.5;
 		for (let i = 0; i < this.sides; i++) {
 			this.vertices.push([
 				l * Math.cos((i - 0.5) * ang + this.rotation) + x,
