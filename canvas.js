@@ -52,6 +52,24 @@ function renderPolygon(polygon) {
 		}
 		ctx.stroke();
 	}
+	if (polygon.locked) {
+		ctx.beginPath();
+		ctx.lineWidth = 2;
+		ctx.strokeStyle = "#f00";
+		for (let i = 0; i < polygon.sides; i++) {
+			if ((polygon.pipes & (1 << i)) === 0) continue;
+			const other = polygon.connections[i];
+			if (!other || !other.locked || other.hasConnection(other.connections.indexOf(polygon))) continue;
+			ctx.moveTo(x, y);
+			let v = [polygon.midpts[i][0] - x, polygon.midpts[i][1] - y];
+			// Rotation matrix
+			const ang = -polygon.pipesRotationDisplay * 2 * Math.PI / polygon.sides;
+			const cosang = Math.cos(ang), sinang = Math.sin(ang);
+			v = [v[0] * cosang - v[1] * sinang, v[0] * sinang + v[1] * cosang];
+			ctx.lineTo(v[0] + x, v[1] + y);
+		}
+		ctx.stroke();
+	}
 	if (polygon === game.source) {
 		ctx.fillStyle = "#000";
 		ctx.beginPath();
@@ -197,6 +215,9 @@ canvas.addEventListener("contextmenu", (ev) => {
 			eventsStackPtr++;
 			if (eventsStack.length > eventsStackPtr) eventsStack.length = eventsStackPtr;
 			poly.lastCanvasUpdate = currentCanvasUpdate;
+			for (const poly2 of poly.connections) {
+				if (poly2) poly2.lastCanvasUpdate = currentCanvasUpdate;
+			}
 			break;
 		}
 	}
@@ -225,6 +246,9 @@ document.addEventListener("keydown", (ev) => {
 			}
 		}
 		poly.lastCanvasUpdate = currentCanvasUpdate;
+		for (const poly2 of poly.connections) {
+			if (poly2) poly2.lastCanvasUpdate = currentCanvasUpdate;
+		}
 	} else if (ev.key === "y") {
 		if (!eventsStack[eventsStackPtr]) return;
 		const [e, k] = eventsStack[eventsStackPtr];
@@ -245,5 +269,8 @@ document.addEventListener("keydown", (ev) => {
 			}
 		}
 		poly.lastCanvasUpdate = currentCanvasUpdate;
+		for (const poly2 of poly.connections) {
+			if (poly2) poly2.lastCanvasUpdate = currentCanvasUpdate;
+		}
 	}
 });
