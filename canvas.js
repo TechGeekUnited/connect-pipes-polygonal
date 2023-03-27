@@ -58,7 +58,7 @@ function renderPolygon(polygon) {
 		ctx.strokeStyle = "#f00";
 		for (let i = 0; i < polygon.sides; i++) {
 			if ((polygon.pipes & (1 << i)) === 0) continue;
-			const other = polygon.connections[(i - polygon.pipesRotation + polygon.sides) % polygon.sides];
+			const other = polygon.connections[(i + polygon.pipesRotation) % polygon.sides];
 			if (other && (!other.locked || other.hasConnection(other.connections.indexOf(polygon)))) continue;
 			ctx.moveTo(x, y);
 			let v = [polygon.midpts[i][0] - x, polygon.midpts[i][1] - y];
