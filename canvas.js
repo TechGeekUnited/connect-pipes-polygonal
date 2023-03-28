@@ -172,10 +172,22 @@ function renderBoard(force = false) {
 		if (!force && currentCanvasUpdate - poly.lastCanvasUpdate > 2) continue;
 		renderPolygon(poly);
 	}
+	// render holograms after polygons for updated rotation display
 	for (const holo of holograms) {
 		if (!force && currentCanvasUpdate - holo.parent.lastCanvasUpdate > 2) continue;
 		renderHologram(holo);
 	}
+	if (game.won) return;
+	let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+	const seconds = elapsedTime % 60;
+	elapsedTime = Math.floor(elapsedTime / 60);
+	const minutes = elapsedTime % 60;
+	elapsedTime = Math.floor(elapsedTime / 60);
+	const hours = elapsedTime;
+	let timeString = `${seconds}s`;
+	if (minutes || hours) timeString = `${minutes}m ` + timeString;
+	if (hours) timeString = `${hours}h ` + timeString;
+	document.getElementById("time-text").innerText = timeString;
 }
 function startRenderBoard() {
 	renderBoard();
@@ -224,53 +236,63 @@ canvas.addEventListener("contextmenu", (ev) => {
 	ev.preventDefault();
 });
 
+function undo() {
+	if (!eventsStackPtr) return;
+	eventsStackPtr--;
+	const [e, k] = eventsStack[eventsStackPtr];
+	const poly = game.board.get(k);
+	switch (e) {
+		case "l": {
+			poly.locked = !poly.locked;
+			break;
+		}
+		case "cc": {
+			poly.pipesRotateClockwise();
+			break;
+		}
+		case "c": {
+			poly.pipesRotateAnticlockwise();
+			break;
+		}
+	}
+	poly.lastCanvasUpdate = currentCanvasUpdate;
+	for (const poly2 of poly.connections) {
+		if (poly2) poly2.lastCanvasUpdate = currentCanvasUpdate;
+	}
+}
+function redo() {
+	if (!eventsStack[eventsStackPtr]) return;
+	const [e, k] = eventsStack[eventsStackPtr];
+	eventsStackPtr++;
+	const poly = game.board.get(k);
+	switch (e) {
+		case "l": {
+			poly.locked = !poly.locked;
+			break;
+		}
+		case "cc": {
+			poly.pipesRotateAnticlockwise();
+			break;
+		}
+		case "c": {
+			poly.pipesRotateClockwise();
+			break;
+		}
+	}
+	poly.lastCanvasUpdate = currentCanvasUpdate;
+	for (const poly2 of poly.connections) {
+		if (poly2) poly2.lastCanvasUpdate = currentCanvasUpdate;
+	}
+}
+function resetGame() {
+	if (!confirm("Are you sure you want to reset? You can still redo your moves.")) return;
+	while (eventsStackPtr) undo();
+}
 document.addEventListener("keydown", (ev) => {
 	if (game.won || !ev.ctrlKey) return;
 	if (ev.key === "z") {
-		if (!eventsStackPtr) return;
-		eventsStackPtr--;
-		const [e, k] = eventsStack[eventsStackPtr];
-		const poly = game.board.get(k);
-		switch (e) {
-			case "l": {
-				poly.locked = !poly.locked;
-				break;
-			}
-			case "cc": {
-				poly.pipesRotateClockwise();
-				break;
-			}
-			case "c": {
-				poly.pipesRotateAnticlockwise();
-				break;
-			}
-		}
-		poly.lastCanvasUpdate = currentCanvasUpdate;
-		for (const poly2 of poly.connections) {
-			if (poly2) poly2.lastCanvasUpdate = currentCanvasUpdate;
-		}
+		undo();
 	} else if (ev.key === "y") {
-		if (!eventsStack[eventsStackPtr]) return;
-		const [e, k] = eventsStack[eventsStackPtr];
-		eventsStackPtr++;
-		const poly = game.board.get(k);
-		switch (e) {
-			case "l": {
-				poly.locked = !poly.locked;
-				break;
-			}
-			case "cc": {
-				poly.pipesRotateAnticlockwise();
-				break;
-			}
-			case "c": {
-				poly.pipesRotateClockwise();
-				break;
-			}
-		}
-		poly.lastCanvasUpdate = currentCanvasUpdate;
-		for (const poly2 of poly.connections) {
-			if (poly2) poly2.lastCanvasUpdate = currentCanvasUpdate;
-		}
+		redo();
 	}
 });

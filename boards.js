@@ -151,6 +151,7 @@ const game = {
 		DFS(game.source);
 	},
 	generateGame(type, x, y) {
+		startTime = Date.now();
 		eventsStack = [];
 		eventsStackPtr = 0;
 		game.board = new Map();
@@ -205,6 +206,8 @@ const BOARD_TYPES = {
 	},
 	squareWrap: {
 		generate(x, y) {
+			x = Math.max(3, x);
+			y = Math.max(3, y);
 			const sideLen = 35;
 			BOARD_TYPES.square.generate(x, y);
 			for (let i = 0; i < x; i++) {
@@ -546,3 +549,5 @@ const BOARD_TYPES = {
 }
 
 window.onload = () => requestAnimationFrame(() => game.generateGame("square", 5, 5));
+
+let startTime = Date.now();

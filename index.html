@@ -66,6 +66,14 @@
 			oninput="zoomLevel = Math.pow(1.1, Number(this.value)); initBoard();"
 		>
 		<h2 id="win-text" style="display: none;">You won!</h2>
+		<span class="c-game-board">
+			<br>
+			Time used:
+			<span id="time-text">0s</span>
+			<button onclick="resetGame();">Restart game</button>
+			<br>
+			<br>
+		</span>
 		<canvas id="c"></canvas>
 	</body>
 </html>
