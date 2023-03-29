@@ -480,9 +480,7 @@ const BOARD_TYPES = {
 			const sqMidptR = sideLen / 2;
 			const unitD = docMidptR * 2 + sideLen;
 			const euDistSq = ([a, b], [c, d]) => (a - c) * (a - c) + (b - d) * (b - d);
-			let calls = 0;
 			const makeCon = (a, b) => {
-				calls++;
 				let aId = 0, aClosest = Infinity;
 				for (let i = 0; i < a.sides; i++) {
 					const e = euDistSq(a.midpts[i], b.position);
@@ -543,7 +541,6 @@ const BOARD_TYPES = {
 				}
 			}
 			game.source = game.board.get(keyFrom("ddc", Math.floor(x / 2), Math.floor(y / 2)));
-			console.log(calls);
 		}
 	}
 }

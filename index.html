@@ -3,9 +3,11 @@
 	<head>
 		<title>Connect the Pipes</title>
 		<link rel="stylesheet" type="text/css" href="styles.css">
+		<link rel="stylesheet" type="text/css" href="themes/default.css" id="theme-css" >
 		<script type="text/javascript" src="queue.js" defer></script>
 		<script type="text/javascript" src="polygon.js" defer></script>
 		<script type="text/javascript" src="boards.js" defer></script>
+		<script type="text/javascript" src="options.js" defer></script>
 		<script type="text/javascript" src="canvas.js" defer></script>
 	</head>
 	<body>
@@ -75,5 +77,16 @@
 			<br>
 		</span>
 		<canvas id="c"></canvas>
+		<details class="c-options">
+			<summary><b>Options</b></summary>
+			<span>
+				<b>Theme:<br/></b>
+				<button class="c-theme c-theme-default">Default</button>
+				<button class="c-theme c-theme-light">Light</button>
+				<button class="c-theme c-theme-dark">Dark</button>
+				<button class="c-theme c-theme-black">Black</button>
+				<button class="c-theme c-theme-mystic">Mystic</button>
+			</span>
+		</details>
 	</body>
 </html>

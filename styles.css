@@ -1,6 +1,6 @@
 body {
-	background-color: #eee;
-	color: #222;
+	background-color: var(--main-bg);
+	color: var(--text);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -18,14 +18,14 @@ body {
 }
 
 .c-create-game {
-	border: 5px solid #666;
-	background-color: #ccc;
+	border: 5px solid var(--menu-border);
+	background-color: var(--menu-bg);
 	margin: 10px;
 	padding: 5px 10px;
 }
 
 #c {
-	border: 5px solid #888;
+	border: 5px solid var(--c-border);
 	touch-action: manipulation;
 }
 
@@ -33,4 +33,39 @@ body {
 	display: inline-block;
 	text-align: left;
 	font-size: 16px;
+}
+
+.c-options {
+	margin-top: 20px;
+	width: 300px;
+}
+
+.c-theme {
+	border: solid thin;
+	padding: 4px 8px;
+	border-radius: 2px;
+}
+
+.c-theme-light {
+	color: #000;
+	background: #fff;
+	border-color: #000;
+}
+
+.c-theme-dark {
+	color: #eee;
+	background: #333;
+	border-color: #eee;
+}
+
+.c-theme-black {
+	color: #fff;
+	background: #000;
+	border-color: #fff;
+}
+
+.c-theme-mystic {
+	color: #cce;
+	background: #224;
+	border-color: #cce;
 }

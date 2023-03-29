@@ -1,8 +1,8 @@
 const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
 
 function renderPolygon(polygon) {
-	ctx.fillStyle = polygon.locked ? "#777" : "#bbb";
-	ctx.strokeStyle = polygon.locked ? "#777" : "#bbb";
+	ctx.fillStyle = polygon.locked ? colors.locked : colors.regular;
+	ctx.strokeStyle = polygon.locked ? colors.locked : colors.regular;
 	ctx.lineWidth = 1;
 	ctx.beginPath();
 	ctx.moveTo(polygon.vertices[0][0], polygon.vertices[0][1]);
@@ -16,13 +16,13 @@ function renderPolygon(polygon) {
 		if ((polygon.pipes & (1 << i)) === 0) continue;
 		connections++;
 	}
-	ctx.fillStyle = "#000";
+	ctx.fillStyle = colors.pipe;
 	ctx.beginPath();
-	const circleSize = polygon === game.source ? 10 : (connections > 1 ? 2 : 7);
+	const circleSize = polygon === game.source ? 10 : (connections > 1 ? 3 : 7);
 	ctx.arc(polygon.position[0], polygon.position[1], circleSize, 0, 2 * Math.PI);
 	ctx.fill();
-	ctx.strokeStyle = "#000";
-	ctx.lineWidth = 4;
+	ctx.strokeStyle = colors.pipe;
+	ctx.lineWidth = 6;
 	ctx.beginPath();
 	const [x, y] = polygon.position;
 	for (let i = 0; i < polygon.sides; i++) {
@@ -39,7 +39,7 @@ function renderPolygon(polygon) {
 	if (polygon.hasLight) {
 		ctx.beginPath();
 		ctx.lineWidth = 2;
-		ctx.strokeStyle = polygon.hasCycle ? "#f00" : "#7cf";
+		ctx.strokeStyle = polygon.hasCycle ? colors.error : colors.flooded;
 		for (let i = 0; i < polygon.sides; i++) {
 			if ((polygon.pipes & (1 << i)) === 0) continue;
 			ctx.moveTo(x, y);
@@ -55,7 +55,7 @@ function renderPolygon(polygon) {
 	if (polygon.locked) {
 		ctx.beginPath();
 		ctx.lineWidth = 2;
-		ctx.strokeStyle = "#f00";
+		ctx.strokeStyle = colors.error;
 		for (let i = 0; i < polygon.sides; i++) {
 			if ((polygon.pipes & (1 << i)) === 0) continue;
 			const other = polygon.connections[(i + polygon.pipesRotation) % polygon.sides];
@@ -71,19 +71,19 @@ function renderPolygon(polygon) {
 		ctx.stroke();
 	}
 	if (polygon === game.source) {
-		ctx.fillStyle = "#000";
+		ctx.fillStyle = colors.pipe;
 		ctx.beginPath();
 		ctx.arc(polygon.position[0], polygon.position[1], 10, 0, 2 * Math.PI);
 		ctx.fill();
-		ctx.strokeStyle = game.source.hasCycle ? "#f00" : "#7cf";
+		ctx.strokeStyle = game.source.hasCycle ? colors.error : colors.flooded;
 		ctx.lineWidth = 3;
 		ctx.beginPath();
 		ctx.arc(polygon.position[0], polygon.position[1], 6, 0, 2 * Math.PI);
 		ctx.stroke();
 	} else if (polygon.hasLight) {
-		ctx.fillStyle = polygon.hasCycle ? "#f00" : "#7cf";
+		ctx.fillStyle = polygon.hasCycle ? colors.error : colors.flooded;
 		ctx.beginPath();
-		ctx.arc(polygon.position[0], polygon.position[1], circleSize - 1, 0, 2 * Math.PI);
+		ctx.arc(polygon.position[0], polygon.position[1], circleSize - 2, 0, 2 * Math.PI);
 		ctx.fill();
 	}
 }
