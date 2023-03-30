@@ -285,6 +285,7 @@ function redo() {
 	}
 }
 function resetGame() {
+	if (game.won) return;
 	if (!confirm("Are you sure you want to reset? You can still redo your moves.")) return;
 	while (eventsStackPtr) undo();
 }
